@@ -96,7 +96,7 @@ public class ExternalTextEdit implements ClientModInitializer
                 }
                 MutableComponent errorText = MutableComponent.create(PlainTextContents.create("External editing failed: " + message))
                     .withStyle(style -> style.withColor(ChatFormatting.RED));
-                minecraftClient.gui.getChat().addMessage(errorText);
+                minecraftClient.gui.getChat().addClientSystemMessage(errorText);
                 return;
             }
             EditBox originalTextFieldWidget = textFieldWidgetReference.get();
