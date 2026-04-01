@@ -5,11 +5,11 @@ import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import net.fabricmc.api.ClientModInitializer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.PlainTextContent;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.PlainTextContents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,26 +47,26 @@ public class ExternalTextEdit implements ClientModInitializer
             .map(argument -> processArgument(argument, tempFilePath, cursorLine, cursorCol)).toArray(String[]::new);
     }
 
-    public static void editFieldWithExternalEditor(TextFieldWidget textFieldWidget)
+    public static void editFieldWithExternalEditor(EditBox textFieldWidget)
     {
         List<String> toEditLines = new ArrayList<>();
-        int cursorCol = textFieldWidget.getCursor();
+        int cursorCol = textFieldWidget.getCursorPosition();
         int cursorLine = 0;
         if (ExternalTextEdit.processingChatScreenKeyPress)
         {
-            MinecraftClient minecraftClient = MinecraftClient.getInstance();
-            toEditLines.addAll(minecraftClient.inGameHud.getChatHud().getMessageHistory());
+            Minecraft minecraftClient = Minecraft.getInstance();
+            toEditLines.addAll(minecraftClient.gui.getChat().getRecentChat());
             cursorLine += toEditLines.size();
         }
-        toEditLines.add(textFieldWidget.getText());
+        toEditLines.add(textFieldWidget.getValue());
         ExternalTextEdit.editFieldWithExternalEditor(textFieldWidget, toEditLines, cursorCol, cursorLine);
     }
 
-    public static void editFieldWithExternalEditor(TextFieldWidget textFieldWidget, List<String> toEditLines,
+    public static void editFieldWithExternalEditor(EditBox textFieldWidget, List<String> toEditLines,
                                                    int cursorCol, int cursorLine)
     {
-        WeakReference<TextFieldWidget> textFieldWidgetReference = new WeakReference<>(textFieldWidget);
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
+        WeakReference<EditBox> textFieldWidgetReference = new WeakReference<>(textFieldWidget);
+        Minecraft minecraftClient = Minecraft.getInstance();
         CompletableFuture.supplyAsync(() ->
         {
             try
@@ -94,19 +94,19 @@ public class ExternalTextEdit implements ClientModInitializer
                 {
                     message = "Unknown failure";
                 }
-                MutableText errorText = MutableText.of(PlainTextContent.of("External editing failed: " + message))
-                    .styled(style -> style.withColor(Formatting.RED));
-                minecraftClient.inGameHud.getChatHud().addMessage(errorText);
+                MutableComponent errorText = MutableComponent.create(PlainTextContents.create("External editing failed: " + message))
+                    .withStyle(style -> style.withColor(ChatFormatting.RED));
+                minecraftClient.gui.getChat().addMessage(errorText);
                 return;
             }
-            TextFieldWidget originalTextFieldWidget = textFieldWidgetReference.get();
+            EditBox originalTextFieldWidget = textFieldWidgetReference.get();
             if (originalTextFieldWidget == null)
             {
                 return;
             }
             if (!editedLines.isEmpty())
             {
-                originalTextFieldWidget.setText(editedLines.get(editedLines.size() - 1));
+                originalTextFieldWidget.setValue(editedLines.get(editedLines.size() - 1));
             }
         }, minecraftClient);
     }
