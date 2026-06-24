@@ -55,7 +55,7 @@ public class ExternalTextEdit implements ClientModInitializer
         if (ExternalTextEdit.processingChatScreenKeyPress)
         {
             Minecraft minecraftClient = Minecraft.getInstance();
-            toEditLines.addAll(minecraftClient.gui.getChat().getRecentChat());
+            toEditLines.addAll(minecraftClient.gui.hud.getChat().getRecentChat());
             cursorLine += toEditLines.size();
         }
         toEditLines.add(textFieldWidget.getValue());
@@ -96,7 +96,7 @@ public class ExternalTextEdit implements ClientModInitializer
                 }
                 MutableComponent errorText = MutableComponent.create(PlainTextContents.create("External editing failed: " + message))
                     .withStyle(style -> style.withColor(ChatFormatting.RED));
-                minecraftClient.gui.getChat().addClientSystemMessage(errorText);
+                minecraftClient.gui.hud.getChat().addClientSystemMessage(errorText);
                 return;
             }
             EditBox originalTextFieldWidget = textFieldWidgetReference.get();
